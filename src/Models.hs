@@ -1,19 +1,19 @@
 {-# LANGUAGE DeriveGeneric #-}
 module Models where
 
-import Data.Time.Calendar
-import Database.SQLite.Simple
-import Database.SQLite.Simple.Ok
-import Database.SQLite.Simple.FromField
-import Database.SQLite.Simple.ToField
-import Data.Text
-import GHC.Generics
-import Data.Aeson.Types
+import           Data.Time.Calendar
+import           Database.SQLite.Simple
+import           Database.SQLite.Simple.Ok
+import           Database.SQLite.Simple.FromField
+import           Database.SQLite.Simple.ToField
+import           Data.Text
+import           GHC.Generics
+import           Data.Aeson.Types
 
 type StartDate = Day
 type EndDate = Day
 
-data Frequency = 
+data Frequency =
   OneTime
   | Weekly
   | Monthly
@@ -22,12 +22,13 @@ data Frequency =
   | BiWeekly
   deriving (Eq, Show, Read, Generic)
 
-data BudgetItemDefinition = BudgetItemDefinition 
+data BudgetItemDefinition = BudgetItemDefinition
   { definitionId :: Int
   , description :: Text
   , amount :: Double
   , startDate :: Day
   , frequency :: Frequency
+  , isDeleted :: Bool
   } deriving (Show, Eq, Generic)
 
 instance ToJSON Frequency
@@ -42,6 +43,9 @@ instance ToField Frequency where
   toField = SQLText . pack . show
 
 instance FromRow BudgetItemDefinition where
-    fromRow = BudgetItemDefinition <$> field <*> field <*> field <*> field <*> field
+    fromRow = BudgetItemDefinition <$> field <*> field <*> field <*> field <*> field <*> field
 
-data BudgetItemInstance = BudgetItemInstance {}
+newtype BudgetItemInstance = BudgetItemInstance (BudgetItemDefinition, Day)
+  deriving (Generic)
+
+instance ToJSON BudgetItemInstance

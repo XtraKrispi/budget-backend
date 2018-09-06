@@ -29,21 +29,24 @@ interpret dbFile program =
                         , amount REAL
                         , startDate TEXT
                         , frequency TEXT
+                        , isDeleted INTEGER
                         )
                     |]
       sqliteInterpreterHelper conn g
 
-    sqliteInterpreterHelper conn (Free (GetBudgetItemDefinitions g)) = do
-      results <- query_ conn [r|  SELECT id
+    sqliteInterpreterHelper conn (Free (GetBudgetItemDefinitions includeDeleted g)) = do
+      results <- queryNamed conn [r|  SELECT id
                                        , description
                                        , amount
                                        , startDate
                                        , frequency
-                                  FROM definitions                                 
-                              |]
+                                       , isDeleted
+                                  FROM definitions
+                                  WHERE (:includeDeleted = 1) OR (:includeDeleted = 0 AND isDeleted = 0)                                
+                              |] [":includeDeleted" := ((if includeDeleted == IncludeDeleted then 1 else 0) :: Int)]
       sqliteInterpreterHelper conn (g results)
 
-    sqliteInterpreterHelper conn (Free (GetBudgetItemInstances s e g)) =
+    sqliteInterpreterHelper conn (Free (GetBudgetItemInstances s e defs g)) =
       sqliteInterpreterHelper conn (g [])
 
     sqliteInterpreterHelper _ (Pure r) = return r
