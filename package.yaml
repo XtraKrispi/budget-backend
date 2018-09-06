@@ -1,0 +1,41 @@
+name:                budget-backend
+version:             0.1.0.0
+#synopsis:
+#description:
+homepage:            https://github.com/githubuser/budget-backend#readme
+license:             BSD3
+author:              Author name here
+maintainer:          example@example.com
+copyright:           2018 Author name here
+category:            Web
+extra-source-files:
+- README.md
+
+dependencies:
+  - base >= 4.7 && < 5
+  - base-compat
+  - servant 
+  - servant-server
+  - servant-auth
+  - mtl
+  - aeson
+  - aeson-compat
+  - wai
+  - warp
+  - text
+  - time
+  - attoparsec
+  - bytestring
+  - blaze-html
+  - directory
+  - string-conversions
+  - lucid
+  - http-media
+  - sqlite-simple
+  - free
+  - raw-strings-qq
+
+executables:
+  budget-backend:
+    source-dirs:      src
+    main:             Main.hs
