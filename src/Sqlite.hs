@@ -15,12 +15,11 @@ runDb :: (MonadIO m) => DbAccess a -> m a
 runDb = 
   liftIO . interpret dbFile
 
-
 interpret :: String -> DbAccess r -> IO r
-interpret dbFile program = do 
-  conn <- open dbFile
-  withTransaction conn $
-    sqliteInterpreterHelper conn program
+interpret dbFile program = 
+  withConnection dbFile $ \conn ->  
+    withTransaction conn $
+      sqliteInterpreterHelper conn program
   where
     sqliteInterpreterHelper :: Connection -> DbAccess r -> IO r
     sqliteInterpreterHelper conn (Free (CreateDatabase g)) = do
@@ -46,5 +45,5 @@ interpret dbFile program = do
 
     sqliteInterpreterHelper conn (Free (GetBudgetItemInstances s e g)) =
       sqliteInterpreterHelper conn (g [])
-      
+
     sqliteInterpreterHelper _ (Pure r) = return r
