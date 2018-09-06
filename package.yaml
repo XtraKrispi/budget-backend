@@ -34,6 +34,7 @@ dependencies:
   - sqlite-simple
   - free
   - raw-strings-qq
+  - wai-logger
 
 executables:
   budget-backend:

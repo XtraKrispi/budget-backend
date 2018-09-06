@@ -40,7 +40,7 @@ instanceServer = getInstances
  where
   getInstances startDate endDate = do
     defStartDate <- liftIO date
-    let defEndDate = defStartDate
+    let defEndDate = addDays 20 defStartDate
     runDb $ getBudgetItemInstances (fromMaybe defStartDate startDate)
                                    (fromMaybe defEndDate endDate)
 
