@@ -19,12 +19,15 @@ import           Effects
 import           Sqlite
 import           Data.Maybe
 import           Data.Time.Clock
+import           Data.Int
 
 date :: IO Day
-date = getCurrentTime >>= return . utctDay
+date = utctDay <$> getCurrentTime
 
 type BudgetItemDefinitionApi =
-  "definitions" :> Get '[JSON] [BudgetItemDefinition]
+      "definitions" :> Get '[JSON] [BudgetItemDefinition] 
+ :<|> "definitions" :> ReqBody '[JSON] BudgetItemDefinition :> Post '[JSON] BudgetItemDefinition
+ :<|> "definitions" :> Capture "id" Int64 :> ReqBody '[JSON] BudgetItemDefinition :> Put '[JSON] ()
 
 type BudgetItemInstanceApi =
   "instances" :> QueryParam "startDate" StartDate :> QueryParam "endDate" EndDate :>Get '[JSON] [BudgetItemInstance]
@@ -34,6 +37,8 @@ type ApplicationApi =
 
 definitionServer :: Server BudgetItemDefinitionApi
 definitionServer = runDb (getBudgetItemDefinitions ExcludeDeleted)
+              :<|> runDb . createBudgetItemDefinition
+              :<|> \id def -> runDb (updateBudgetItemDefinition (def{ definitionId = id }))
 
 instanceServer :: Server BudgetItemInstanceApi
 instanceServer = getInstances

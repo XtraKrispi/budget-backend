@@ -14,6 +14,8 @@ data Effect next =
     CreateDatabase next
   | GetBudgetItemDefinitions InclusionRule ([BudgetItemDefinition] -> next)
   | GetBudgetItemInstances StartDate EndDate [BudgetItemDefinition] ([BudgetItemInstance] -> next)
+  | CreateBudgetItemDefinition BudgetItemDefinition (BudgetItemDefinition -> next)
+  | UpdateBudgetItemDefinition BudgetItemDefinition next
   deriving (Functor)
 
 type DbAccess = Free Effect
@@ -29,3 +31,9 @@ getBudgetItemInstances :: StartDate -> EndDate -> DbAccess [BudgetItemInstance]
 getBudgetItemInstances s e = do
   defs <- getBudgetItemDefinitions ExcludeDeleted
   liftF (GetBudgetItemInstances s e defs id)
+
+createBudgetItemDefinition :: BudgetItemDefinition -> DbAccess BudgetItemDefinition
+createBudgetItemDefinition def = liftF (CreateBudgetItemDefinition def id)
+
+updateBudgetItemDefinition :: BudgetItemDefinition -> DbAccess ()
+updateBudgetItemDefinition def = liftF (UpdateBudgetItemDefinition def ())

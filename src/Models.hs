@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
 module Models where
 
 import           Data.Time.Calendar
@@ -9,21 +10,21 @@ import           Database.SQLite.Simple.ToField
 import           Data.Text
 import           GHC.Generics
 import           Data.Aeson.Types
+import           Data.Int
 
 type StartDate = Day
 type EndDate = Day
 
 data Frequency =
-  OneTime
+    OneTime
   | Weekly
   | Monthly
   | Yearly
-  | SemiMonthly
   | BiWeekly
   deriving (Eq, Show, Read, Generic)
 
 data BudgetItemDefinition = BudgetItemDefinition
-  { definitionId :: Int
+  { definitionId :: Int64
   , description :: Text
   , amount :: Double
   , startDate :: Day
@@ -33,6 +34,8 @@ data BudgetItemDefinition = BudgetItemDefinition
 
 instance ToJSON Frequency
 instance ToJSON BudgetItemDefinition
+instance FromJSON Frequency
+instance FromJSON BudgetItemDefinition
 
 instance FromField Frequency where
   fromField field = do
@@ -48,4 +51,6 @@ instance FromRow BudgetItemDefinition where
 newtype BudgetItemInstance = BudgetItemInstance (BudgetItemDefinition, Day)
   deriving (Generic)
 
-instance ToJSON BudgetItemInstance
+instance ToJSON BudgetItemInstance where
+  toJSON (BudgetItemInstance (def, d)) =
+    object ["definition" .= def, "day" .= d]
