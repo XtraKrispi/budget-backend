@@ -12,16 +12,12 @@ import Data.List (sort)
 import Models
 import Effects
 import BusinessLogic
+import Control.Monad.Reader
 
-dbFile = "budget.db"
-
-runDb :: (MonadIO m) => DbAccess a -> m a
-runDb = 
-  liftIO . interpret dbFile
-
-interpret :: String -> DbAccess r -> IO r
-interpret dbFile program = 
-  withConnection dbFile $ \conn ->  
+runSqlite :: (MonadIO m) => DbAccess r -> ReaderT Settings m r
+runSqlite program = do
+  Sqlite dbFile <- asks databaseSettings  
+  liftIO $ withConnection dbFile $ \conn ->  
     withTransaction conn $
       sqliteInterpreterHelper conn program
   where

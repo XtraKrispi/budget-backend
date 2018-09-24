@@ -11,6 +11,7 @@ import           Data.Text
 import           GHC.Generics
 import           Data.Aeson.Types
 import           Data.Int
+import           Control.Monad.Reader
 
 type StartDate = Day
 type EndDate = Day
@@ -54,3 +55,8 @@ newtype BudgetItemInstance = BudgetItemInstance (BudgetItemDefinition, Day)
 instance ToJSON BudgetItemInstance where
   toJSON (BudgetItemInstance (def, d)) =
     object ["definition" .= def, "day" .= d]
+
+data DatabaseSettings = Sqlite String
+
+data Settings = Settings { databaseSettings :: DatabaseSettings
+                         }

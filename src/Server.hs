@@ -11,7 +11,7 @@ import           Data.Aeson.Types
 import           Data.Time.Calendar
 import           GHC.Generics
 import           Network.Wai
-import           Network.Wai.Handler.Warp
+import           Network.Wai.Handler.Warp hiding (Settings)
 import           Control.Monad.IO.Class
 import           Servant
 import           Models
@@ -20,9 +20,13 @@ import           Sqlite
 import           Data.Maybe
 import           Data.Time.Clock
 import           Data.Int
+import           Control.Monad.Reader
+
 
 date :: IO Day
 date = utctDay <$> getCurrentTime
+
+type AppM = ReaderT Settings Handler
 
 type BudgetItemDefinitionApi =
       "definitions" :> Get '[JSON] [BudgetItemDefinition] 
@@ -35,21 +39,21 @@ type BudgetItemInstanceApi =
 type ApplicationApi =
   BudgetItemDefinitionApi :<|> BudgetItemInstanceApi
 
-definitionServer :: Server BudgetItemDefinitionApi
-definitionServer = runDb (getBudgetItemDefinitions ExcludeDeleted)
-              :<|> runDb . createBudgetItemDefinition
-              :<|> \id def -> runDb (updateBudgetItemDefinition (def{ definitionId = id }))
+definitionServer :: ServerT BudgetItemDefinitionApi AppM
+definitionServer = runSqlite (getBudgetItemDefinitions ExcludeDeleted)
+              :<|> runSqlite . createBudgetItemDefinition
+              :<|> \id def -> runSqlite (updateBudgetItemDefinition (def{ definitionId = id }))
 
-instanceServer :: Server BudgetItemInstanceApi
+instanceServer :: ServerT BudgetItemInstanceApi AppM
 instanceServer = getInstances
  where
   getInstances startDate endDate = do
     defStartDate <- liftIO date
     let defEndDate = addDays 20 defStartDate
-    runDb $ getBudgetItemInstances (fromMaybe defStartDate startDate)
+    runSqlite $ getBudgetItemInstances (fromMaybe defStartDate startDate)
                                    (fromMaybe defEndDate endDate)
 
-applicationServer :: Server ApplicationApi
+applicationServer :: ServerT ApplicationApi AppM
 applicationServer = definitionServer :<|> instanceServer
 
 definitionApi :: Proxy BudgetItemDefinitionApi
@@ -61,6 +65,9 @@ instanceApi = Proxy
 applicationApi :: Proxy ApplicationApi
 applicationApi = Proxy
 
-app :: Application
-app = serve applicationApi applicationServer
+nt :: Settings -> AppM a -> Handler a
+nt = flip runReaderT
+
+app :: Settings -> Application
+app s = serve applicationApi $ hoistServer applicationApi (nt s) applicationServer
 
